@@ -14,8 +14,10 @@ Install the package through [Composer](http://getcomposer.org/).
 Run the Composer require command from the Terminal:
 
     composer require gloudemans/shoppingcart
+    
+If you're using Laravel 5.5, this is all there is to do. 
 
-Now all you have to do is add the service provider of the package and alias the package. To do this open your `config/app.php` file.
+Should you still be on version 5.4 of Laravel, the final steps for you are to add the service provider of the package and alias the package. To do this open your `config/app.php` file.
 
 Add a new line to the `providers` array:
 
@@ -36,6 +38,7 @@ Look at one of the following topics to learn more about LaravelShoppingcart
 * [Collections](#collections)
 * [Instances](#instances)
 * [Models](#models)
+* [Database](#database)
 * [Exceptions](#exceptions)
 * [Events](#events)
 * [Example](#example)
@@ -228,7 +231,7 @@ To find an item in the cart, you can use the `search()` method.
 
 **This method was changed on version 2**
 
-Behind the scenes, the method simply uses the search method of the Laravel Collection class. This means you must pass it a Closure in which you'll specify you search terms.
+Behind the scenes, the method simply uses the filter method of the Laravel Collection class. This means you must pass it a Closure in which you'll specify you search terms.
 
 If you for instance want to find all items with an id of 1:
 
@@ -322,6 +325,42 @@ foreach(Cart::content() as $row) {
 	echo 'You have ' . $row->qty . ' items of ' . $row->model->name . ' with description: "' . $row->model->description . '" in your cart.';
 }
 ```
+## Database
+
+- [Config](#configuration)
+- [Storing the cart](#save-cart-to-database)
+- [Restoring the cart](#retrieve-cart-from-database)
+
+### Configuration
+To save cart into the database so you can retrieve it later, the package needs to know which database connection to use and what the name of the table is.
+By default the package will use the default database connection and use a table named `shoppingcart`.
+If you want to change these options, you'll have to publish the `config` file.
+
+    php artisan vendor:publish --provider="Gloudemans\Shoppingcart\ShoppingcartServiceProvider" --tag="config"
+
+This will give you a `cart.php` config file in which you can make the changes.
+
+To make your life easy, the package also includes a ready to use `migration` which you can publish by running:
+
+    php artisan vendor:publish --provider="Gloudemans\Shoppingcart\ShoppingcartServiceProvider" --tag="migrations"
+    
+This will place a `shoppingcart` table's migration file into `database/migrations` directory. Now all you have to do is run `php artisan migrate` to migrate your database.
+
+### Storing the cart    
+To store your cart instance into the database, you have to call the `store($identifier) ` method. Where `$identifier` is a random key, for instance the id or username of the user.
+
+    Cart::store('username');
+    
+    // To store a cart instance named 'wishlist'
+    Cart::instance('wishlist')->store('username');
+
+### Restoring the cart
+If you want to retrieve the cart from the database and restore it, all you have to do is call the  `restore($identifier)` where `$identifier` is the key you specified for the `store` method.
+ 
+    Cart::restore('username');
+    
+    // To restore a cart instance named 'wishlist'
+    Cart::instance('wishlist')->restore('username');
 
 ## Exceptions
 
@@ -339,9 +378,9 @@ The cart also has events build in. There are five events available for you to li
 
 | Event         | Fired                                    | Parameter                        |
 | ------------- | ---------------------------------------- | -------------------------------- |
-| cart.add      | When an item was added to the cart.      | The `CartItem` that was added.   |
-| cart.update   | When an item in the cart was updated.    | The `CartItem` that was updated. |
-| cart.remove   | When an item is removed from the cart.   | The `CartItem` that was removed. |
+| cart.added    | When an item was added to the cart.      | The `CartItem` that was added.   |
+| cart.updated  | When an item in the cart was updated.    | The `CartItem` that was updated. |
+| cart.removed  | When an item is removed from the cart.   | The `CartItem` that was removed. |
 | cart.stored   | When the content of a cart was stored.   | -                                |
 | cart.restored | When the content of a cart was restored. | -                                |
 
